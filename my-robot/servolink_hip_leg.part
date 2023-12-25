@@ -1,0 +1,13 @@
+{
+    "configuration": "default",
+    "documentId": "c70064af92f8a9306e3ebf2d",
+    "documentMicroversion": "46851f5ca9485fc00d5e75a4",
+    "elementId": "0367e2a9ec1309e349346e58",
+    "fullConfiguration": "default",
+    "id": "MTMc5ueNvR8jzQbg+",
+    "isStandardContent": false,
+    "name": "Servolink_Hip_Leg <1>",
+    "partId": "JFL",
+    "suppressed": false,
+    "type": "Part"
+}
