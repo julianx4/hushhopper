@@ -1,13 +1,13 @@
 {
     "configuration": "default",
-    "documentId": "c70064af92f8a9306e3ebf2d",
-    "documentMicroversion": "46851f5ca9485fc00d5e75a4",
-    "elementId": "0367e2a9ec1309e349346e58",
+    "documentId": "80381315f4e76b135508d827",
+    "documentMicroversion": "082f200cdc41a21360c8b5bf",
+    "elementId": "539aacb67bca4f2e670de383",
     "fullConfiguration": "default",
-    "id": "MA0N5Ot/ByZ2n9+Ty",
+    "id": "M0MLIp2qSRf047Mly",
     "isStandardContent": false,
     "name": "Foot <1>",
-    "partId": "JFX",
+    "partId": "JFb",
     "suppressed": false,
     "type": "Part"
 }

@@ -4,10 +4,10 @@
     "documentMicroversion": "082f200cdc41a21360c8b5bf",
     "elementId": "539aacb67bca4f2e670de383",
     "fullConfiguration": "default",
-    "id": "MbfGu6PjdpL4Jed8z",
+    "id": "MpTePp+/8zv2W5Aw5",
     "isStandardContent": false,
-    "name": "ST3125 <1>",
-    "partId": "JFP",
+    "name": "Hip_Servo_Knee_Link <1>",
+    "partId": "JFL",
     "suppressed": false,
     "type": "Part"
 }

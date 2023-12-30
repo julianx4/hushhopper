@@ -1,13 +1,13 @@
 {
     "configuration": "default",
-    "documentId": "c70064af92f8a9306e3ebf2d",
-    "documentMicroversion": "46851f5ca9485fc00d5e75a4",
-    "elementId": "0367e2a9ec1309e349346e58",
+    "documentId": "80381315f4e76b135508d827",
+    "documentMicroversion": "082f200cdc41a21360c8b5bf",
+    "elementId": "539aacb67bca4f2e670de383",
     "fullConfiguration": "default",
-    "id": "MTMc5ueNvR8jzQbg+",
+    "id": "Mq0fkDu67j3qnwhlg",
     "isStandardContent": false,
     "name": "Servolink_Hip_Leg <1>",
-    "partId": "JFL",
+    "partId": "JFX",
     "suppressed": false,
     "type": "Part"
 }

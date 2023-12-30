@@ -1,13 +1,13 @@
 {
     "configuration": "default",
-    "documentId": "c70064af92f8a9306e3ebf2d",
-    "documentMicroversion": "46851f5ca9485fc00d5e75a4",
-    "elementId": "0367e2a9ec1309e349346e58",
+    "documentId": "80381315f4e76b135508d827",
+    "documentMicroversion": "082f200cdc41a21360c8b5bf",
+    "elementId": "539aacb67bca4f2e670de383",
     "fullConfiguration": "default",
-    "id": "M5i4tzNlNaQX+kmzH",
+    "id": "MPTtkS1mNqwzqzwzq",
     "isStandardContent": false,
     "name": "Servolink_Body_Hip <1>",
-    "partId": "JFH",
+    "partId": "JFT",
     "suppressed": false,
     "type": "Part"
 }
