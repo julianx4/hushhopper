@@ -6,6 +6,7 @@ from gymnasium import spaces
 from gymnasium.spaces import MultiDiscrete
 np.set_printoptions(precision=3, linewidth=np.inf)
 
+Z_POSITION = 0.24
 ROBOT_URDF_PATH = "hushhopper3D/robot.urdf"
 
 class WalkingRobotEnv(gym.Env):
@@ -32,7 +33,7 @@ class WalkingRobotEnv(gym.Env):
             self.physicsClient = p.connect(p.GUI)
         
         p.setAdditionalSearchPath(pybullet_data.getDataPath())
-        self.robotId = p.loadURDF(ROBOT_URDF_PATH, [0, 0, 0.22], 
+        self.robotId = p.loadURDF(ROBOT_URDF_PATH, [0, 0, Z_POSITION], 
                                   p.getQuaternionFromEuler([0, 0, 0]))
         self.joint_name_to_index = {}
         for i in range(p.getNumJoints(self.robotId)):
@@ -143,7 +144,7 @@ class WalkingRobotEnv(gym.Env):
         p.changeDynamics(planeId, -1, lateralFriction=1,
                     spinningFriction=0, rollingFriction=0)
 
-        self.robotId = p.loadURDF(ROBOT_URDF_PATH, [0, 0, 0.22], 
+        self.robotId = p.loadURDF(ROBOT_URDF_PATH, [0, 0, Z_POSITION], 
                                   p.getQuaternionFromEuler([0, 0, 0]))
 
 
@@ -158,7 +159,7 @@ class WalkingRobotEnv(gym.Env):
             if joint_index != -1:
                 p.resetJointState(self.robotId, joint_index, initial_position)
             
-        initial_base_position = [0, 0, 0.22]
+        initial_base_position = [0, 0, Z_POSITION]
         initial_base_orientation = p.getQuaternionFromEuler([0, 0, 0])  
         p.resetBasePositionAndOrientation(self.robotId, initial_base_position, initial_base_orientation)
 
