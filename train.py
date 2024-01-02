@@ -1,6 +1,8 @@
 from hopperEnv import WalkingRobotEnv
 from stable_baselines3 import PPO
 import os
+import torch
+#device = torch.device("mps")
 
 models_dir = "models/PPO"
 logdir = "logs"
@@ -14,7 +16,9 @@ if not os.path.exists(logdir):
 env = WalkingRobotEnv(GUI = False)
 env.reset()
 
-model = PPO("MlpPolicy", env, tensorboard_log=logdir, verbose=1)
+model = PPO("MlpPolicy", env, tensorboard_log=logdir, verbose=1) #, device = "mps")
+
+#model.policy.to(device)
 
 TIMESTEPS = 10000
 iters = 0

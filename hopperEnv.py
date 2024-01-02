@@ -6,7 +6,7 @@ from gymnasium import spaces
 from gymnasium.spaces import MultiDiscrete
 np.set_printoptions(precision=3, linewidth=np.inf)
 
-ROBOT_URDF_PATH = "my-robot/robot.urdf"
+ROBOT_URDF_PATH = "hushhopper3D/robot.urdf"
 
 class WalkingRobotEnv(gym.Env):
     def __init__(self, GUI = False):
@@ -15,7 +15,7 @@ class WalkingRobotEnv(gym.Env):
         self.time_step = 1.0 / 120.0
         self.step_counter = 0
         self.episode_step_counter = 0
-
+        self.prev_actions = np.zeros(10)
         self.action_space = MultiDiscrete([7] * 10)
         
         # Define observation space (modify this according to your robot)
@@ -44,18 +44,18 @@ class WalkingRobotEnv(gym.Env):
         self.joint_initial_positions = {
             "left_foot": -0.7,
             "left_hip": -0.7,
-            "left_hip_around_torso": 0,
+            "left_Z": 0,
             "left_in_out": 0,
             "left_knee": 1.4,
             "right_foot": 0.7,
             "right_hip": 0.7,
-            "right_hip_around_torso": 0,
+            "right_Z": 0,
             "right_in_out": 0,
             "right_knee": -1.4
         }
 
     def step(self, action):
-        max_velocity = np.pi / 3  # Adjusted to real servo speed
+        max_velocity = 0.8  # Adjusted to real servo speed
 
         angle_changes = self.scale_actions(action)
 
@@ -76,10 +76,12 @@ class WalkingRobotEnv(gym.Env):
         self.step_counter += 1
         self.episode_step_counter += 1
         observation = self._get_observation()
-        reward = self._compute_reward()
+        reward = self._compute_reward(action)
+        self.prev_actions = action 
         done = self._check_done()
         info = {}
         truncated = False
+        #print(self.episode_step_counter)
         return observation, reward, done, truncated, info
         
     def reset(self, seed=None, options=None, **kwargs):
@@ -175,12 +177,22 @@ class WalkingRobotEnv(gym.Env):
         linear_acceleration = (current_linear_velocity - self.prev_linear_velocity) / self.time_step
         self.prev_linear_velocity = current_linear_velocity
 
-        # Combine all observations into a single array
+
         observation = np.concatenate([joint_positions, joint_velocities, angular_velocity, linear_acceleration]).astype(np.float32)
 
         return observation
+    
+    def _compute_reward(self, current_actions):
+        current_position, current_orientation = p.getBasePositionAndOrientation(self.robotId)
+        forward_distance = current_position[1]
 
-    def _compute_reward(self):
+        base_height = current_position[2]
+        height_penalty = abs(base_height - 0.235) * 10.0
+
+        reward = forward_distance - height_penalty
+        return reward
+    
+    def _compute_reward1(self):
         current_position, current_orientation = p.getBasePositionAndOrientation(self.robotId)
 
         base_height = current_position[2]
@@ -198,7 +210,7 @@ class WalkingRobotEnv(gym.Env):
 
             
         deviation_penalty_weight = 0.1
-        height_penalty_weight = 1.0  # Adjust based on importance of height maintenance
+        height_penalty_weight = 10.0  # Adjust based on importance of height maintenance
         survival_reward = self.episode_step_counter * 0.01  # Reward for staying upright
 
         reward = -height_penalty * height_penalty_weight - deviation_penalty * deviation_penalty_weight + survival_reward
@@ -248,4 +260,5 @@ class WalkingRobotEnv(gym.Env):
         reached_goal = forward_distance >= goal_distance
         strayed_off_course = side_distance >= wrong_direction_limit
         walked_backward_too_far = forward_distance < -wrong_direction_limit
-        return robot_has_fallen # or reached_goal or strayed_off_course or walked_backward_too_far or robot_turned_too_much
+        is_done = self.episode_step_counter >= 10000
+        return is_done

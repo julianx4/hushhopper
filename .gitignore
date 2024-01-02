@@ -4,3 +4,5 @@ logs
 mini_cheetah
 .ipynb_checkpoints
 __pycache__
+.gitignore
+pose.py

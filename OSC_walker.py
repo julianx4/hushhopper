@@ -53,13 +53,11 @@ class Robot():
             "right_in_out": 0,
             "right_knee": -1.7
         }
-        self.is_walking = False
-        self.radius = 0.1
-        self.step_height = 0.05
-        self.walking_speed = 0.05
-
+        self.new_foot_1_position_rel = (0, 0, 0)
+        self.new_foot_2_position_rel = (0, 0, 0)
         self.link_name_to_index_map = self.create_link_name_to_index_map()
 
+        self.joint_angles = self.joint_initial_positions.copy()
         self.max_velocity = 0.8
 
         self.keep_running = True
@@ -165,74 +163,9 @@ class Robot():
         with self.lock:
             self.joint_angles_for_pybullet  = dict(zip(self.joint_order, angles))
 
-    def stop(self):
-        self.keep_running = False
-        #self.osc_server.shutdown()  # Stop the OSC server
-
-    def move_feet_to_position(self, target_pos_foot_rel, target_ori_foot_rel_euler, target_pos_foot_2_rel, target_ori_foot_2_rel_euler):
-        # Get the robot's base position and orientation in world frame
-        base_pos, base_ori = p.getBasePositionAndOrientation(self.robotId)
-
-        # Convert Euler angles to quaternions for orientations
-        target_ori_foot_rel = p.getQuaternionFromEuler(target_ori_foot_rel_euler)
-        target_ori_foot_2_rel = p.getQuaternionFromEuler(target_ori_foot_2_rel_euler)
-
-        # Transform the target positions and orientations from robot frame to world frame
-        target_pos_foot = self.transform_position_to_world_frame(target_pos_foot_rel, base_pos, base_ori)
-        target_ori_foot = self.transform_orientation_to_world_frame(target_ori_foot_rel, base_ori)
-
-        target_pos_foot_2 = self.transform_position_to_world_frame(target_pos_foot_2_rel, base_pos, base_ori)
-        target_ori_foot_2 = self.transform_orientation_to_world_frame(target_ori_foot_2_rel, base_ori)
-
-        # Calculate the joint angles using inverse kinematics
-        foot_link_index = self.link_name_to_index_map['foot']
-        foot_2_link_index = self.link_name_to_index_map['foot_2']
-
-        joint_angles_foot = p.calculateInverseKinematics(self.robotId, foot_link_index, target_pos_foot, target_ori_foot)
-        joint_angles_foot_2 = p.calculateInverseKinematics(self.robotId, foot_2_link_index, target_pos_foot_2, target_ori_foot_2)
-
-        # Calculate max time required for any joint to reach its target position
-        max_time = 0
-        for i, (target_angle, target_angle_2) in enumerate(zip(joint_angles_foot, joint_angles_foot_2)):
-            current_angle = p.getJointState(self.robotId, i)[0]
-            time_to_reach = abs(target_angle - current_angle) / self.max_velocity
-            max_time = max(max_time, time_to_reach)
-
-            current_angle_2 = p.getJointState(self.robotId, i)[0]
-            time_to_reach_2 = abs(target_angle_2 - current_angle_2) / self.max_velocity
-            max_time = max(max_time, time_to_reach_2)
-
-        # Set velocities so that all joints reach their target at the same time
-        for i, (target_angle, target_angle_2) in enumerate(zip(joint_angles_foot, joint_angles_foot_2)):
-            current_angle = p.getJointState(self.robotId, i)[0]
-            velocity = abs(target_angle - current_angle) / max_time
-
-            current_angle_2 = p.getJointState(self.robotId, i)[0]
-            velocity_2 = abs(target_angle_2 - current_angle_2) / max_time
-
-            p.setJointMotorControl2(self.robotId, i, p.POSITION_CONTROL, targetPosition=target_angle, force=500, maxVelocity=velocity)
-            p.setJointMotorControl2(self.robotId, i, p.POSITION_CONTROL, targetPosition=target_angle_2, force=500, maxVelocity=velocity_2)
-
-    def update_walking_motion(self, current_time):
-        # Assuming walking parameters like radius, step_height, and walking_speed are defined
-        t = (current_time - self.start_walking_time) * self.walking_speed
-
-        # Calculate positions for the feet based on the circular motion
-        x_left = self.radius * np.cos(t)
-        y_left = self.radius * np.sin(t)
-        z_left = self.step_height * np.abs(np.sin(t))  # Simple up and down motion
-
-        x_right = self.radius * np.cos(t + np.pi)  # Offset by pi to alternate the motion
-        y_right = self.radius * np.sin(t + np.pi)
-        z_right = self.step_height * np.abs(np.sin(t + np.pi))
-
-        orientation_euler = (0, 0, 0) # Feet are always flat on the ground
-        # Apply the new positions to the feet with the specified orientation
-        self.move_feet_to_position((x_left, y_left, z_left), orientation_euler, 
-                                   (x_right, y_right, z_right), orientation_euler)
-
     def run_simulation(self):
         while self.keep_running:
+
             keys = p.getKeyboardEvents()
         
             if ord('r') in keys and keys[ord('r')] & p.KEY_WAS_TRIGGERED:
@@ -243,31 +176,26 @@ class Robot():
                 print("Gravity: ", self.gravity)
                 p.setGravity(0, 0, self.gravity)
 
-            # Toggle walking motion when 'u' is pressed
-            if ord('u') in keys and keys[ord('u')] & p.KEY_WAS_TRIGGERED:
-                self.is_walking = not self.is_walking
-                if self.is_walking:
-                    # Initialize walking parameters
-                    self.start_walking_time = time.time()
-                else:
-                    # Reset feet to initial positions when stopping
-                    # Replace with appropriate reset logic if needed
-                    self.move_feet_to_position((0, 0, 0), (0, 0, 0), (0, 0, 0), (0, 0, 0))
-
-            if self.is_walking:
-                # Update the walking motion if the robot is in walking mode
-                self.update_walking_motion(time.time())
+            with self.lock:
+                for joint_name, angle in self.joint_angles_for_pybullet.items():
+                    joint_index = self.joint_name_to_index.get(joint_name)
+                    if joint_index is not None:
+                        p.setJointMotorControl2(self.robotId, joint_index, p.POSITION_CONTROL, 
+                                                targetPosition=angle, force=500, maxVelocity=self.max_velocity)
+                    else:
+                        print(f"Joint {joint_name} not found")
 
             p.stepSimulation()
+            time.sleep(1.0 / 240.0)  # Simulation time step
 
-            time.sleep(1.0 / 240.0)
+    def stop(self):
+        self.keep_running = False
+        #self.osc_server.shutdown()  # Stop the OSC server
 
 # Example usage
 robot = Robot()
 robot.reset()
-robot.radius = 0.2
-robot.step_height = 0.1
-robot.walking_speed = 2
+robot.start_osc_server("192.168.2.107", 9005)
 
 try:
     robot.run_simulation()
